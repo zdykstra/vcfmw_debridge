@@ -10,7 +10,7 @@ import weechat
 
 SCRIPT_NAME = "vcfmw_debridge"
 SCRIPT_AUTHOR = "zdykstra"
-SCRIPT_VERSION = "1.0.1"
+SCRIPT_VERSION = "1.0.2"
 SCRIPT_LICENSE = "MIT"
 SCRIPT_DESC = "Rewrite ccmpbot bridge messages in #vcfmw/#shadytel-vcfmw to appear from the bridged user"
 
@@ -19,6 +19,9 @@ TARGET_CHANNELS = ("#vcfmw", "#shadytel-vcfmw")
 
 # Matches: <Nick> rest of message
 BRIDGE_RE = re.compile(r"^<([^>]+)>\s?(.*)$")
+
+# Strips non-ASCII characters (e.g. emoji) from bridged display names
+NICK_FILTER_RE = re.compile(r"[^\x20-\x7E]+")
 
 
 def print_cb(data, modifier, modifier_data, string):
@@ -44,7 +47,8 @@ def print_cb(data, modifier, modifier_data, string):
         return string
 
     real_nick, real_message = match.groups()
-    new_prefix = weechat.info_get("nick_color", real_nick) + real_nick + weechat.color("reset")
+    filtered_nick = NICK_FILTER_RE.sub("", real_nick).strip() or real_nick
+    new_prefix = weechat.info_get("nick_color", filtered_nick) + filtered_nick + weechat.color("reset")
     return new_prefix + "\t" + real_message
 
 
