@@ -10,12 +10,15 @@ import weechat
 
 SCRIPT_NAME = "vcfmw_debridge"
 SCRIPT_AUTHOR = "zdykstra"
-SCRIPT_VERSION = "1.0.2"
+SCRIPT_VERSION = "1.0.3"
 SCRIPT_LICENSE = "MIT"
 SCRIPT_DESC = "Rewrite ccmpbot bridge messages in #vcfmw/#shadytel-vcfmw to appear from the bridged user"
 
 BOT_NICK = "ccmpbot"
 TARGET_CHANNELS = ("#vcfmw", "#shadytel-vcfmw")
+
+# Matches the bot's nick tag, allowing IRC fallback suffixes (e.g. ccmpbot`, ccmpbot_)
+BOT_NICK_TAG_RE = re.compile(r"^nick_" + re.escape(BOT_NICK) + r"[`_^|\-\[\]{}\\0-9]*$", re.IGNORECASE)
 
 # Matches: <Nick> rest of message
 BRIDGE_RE = re.compile(r"^<([^>]+)>\s?(.*)$")
@@ -31,7 +34,7 @@ def print_cb(data, modifier, modifier_data, string):
         return string
     buffer_pointer, tags = parts[0], parts[1]
 
-    if ("nick_" + BOT_NICK) not in tags.split(","):
+    if not any(BOT_NICK_TAG_RE.match(t) for t in tags.split(",")):
         return string
 
     buffer_full_name = weechat.buffer_get_string(buffer_pointer, "full_name")
